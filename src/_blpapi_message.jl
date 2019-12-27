@@ -9,7 +9,7 @@ function blpapi_Message_correlationId(message, index)
     elseif t == BLPAPI_CORRELATION_TYPE_POINTER
         blpapi_CorrelationId_strValue(message,index)
     else
-        @debug "received correlation id type $t"
+        @debug "received unknown correlation id type $t"
         return ""
     end
 end

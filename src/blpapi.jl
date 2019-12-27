@@ -2,19 +2,19 @@ module blpapi
 
 # binary lib location
 if isfile(joinpath(dirname(@__FILE__),"..","lib",
-                   string("blpapi3_",(Sys.ARCH==:i686) ? "32" : (Sys.ARCH==:x86_64) ? "64" : error("unknown Sys.ARCH"),
-                          ".",Sys.iswindows() ? "dll" : Sys.islinux() ? "so" : error("OS not supported"))))
-	const blpapi3=joinpath(dirname(@__FILE__),"..","lib",(Sys.ARCH==:i686) ? "blpapi3_32" : "blpapi3_64")
+                   string("blpapi3_", (Sys.ARCH==:x86_64) ? "64" : error("$(Sys.ARCH) not supported"),
+                          ".",Sys.iswindows() ? "dll" : Sys.islinux() ? "so" : error("$(Sys.MACHINE) not supported"))))
+	const blpapi3=joinpath(dirname(@__FILE__),"..","lib","blpapi3_64")
 else
     error("blpapi binary lib not found")
 end
 
 if isfile(joinpath(dirname(@__FILE__),"..","lib",
-    string("blpapi3_helper_",(Sys.ARCH==:i686) ? "32" : (Sys.ARCH==:x86_64) ? "64" : error("unknown Sys.ARCH"),
-    ".",Sys.iswindows() ? "dll" : Sys.islinux() ? "so" : error("OS not supported"))))
-const blpapi3_helper=joinpath(dirname(@__FILE__),"..","lib",(Sys.ARCH==:i686) ? "blpapi3_helper_32" : "blpapi3_helper_64")
+                   string("blpapi3_helper_", (Sys.ARCH==:x86_64) ? "64" : error("$(Sys.ARCH) not supported"),
+                          ".",Sys.iswindows() ? "dll" : Sys.islinux() ? "so" : error("$(Sys.MACHINE) not supported"))))
+    const blpapi3_helper=joinpath(dirname(@__FILE__),"..","lib","blpapi3_helper_64")
 else
-error("blpapi3_helper binary lib not found")
+    error("blpapi3_helper binary lib not found")
 end
 
 macro blpapi_setPointer(var,body)
@@ -74,4 +74,3 @@ include("_blpapi_request.jl")
 include("_blpapi_subscriptionlist.jl")
 
 end
-

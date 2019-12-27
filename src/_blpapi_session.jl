@@ -1,5 +1,18 @@
-function blpapi_Session_create(parameters, handler, dispatcher, userData)
+function blpapi_Session_create(parameters, handler::Ptr{Cvoid}, dispatcher, userData::Ptr{Cvoid})
+    if userData!=C_NULL
+        error("must have a handler function when queue is provided")
+    end
     ccall((:blpapi_Session_create, blpapi3), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), parameters, handler, dispatcher, userData)
+end
+
+function blpapi_Session_create(parameters, handler::Function, dispatcher, queue::Ptr{Cvoid})
+    if queue==C_NULL
+        error("must have a queue when handler function is provided")
+    end
+    uv_async_send=@cfunction(x->ccall(:uv_async_send,Cint,(Ptr{Cvoid},),x),Cint,(Ptr{Cvoid},))
+    cond=Base.AsyncCondition(handler)
+    @async wait(cond)
+    ccall((:blpapi_Session_create_with_queue_handle, blpapi3_helper), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), parameters, dispatcher, queue, uv_async_send, cond.handle)
 end
 
 function blpapi_Session_destroy(session)
@@ -38,12 +51,12 @@ function blpapi_Session_cancel(session, correlationIds, numCorrelationIds, reque
     @check ccall((:blpapi_Session_cancel, blpapi3), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Cint, Cstring, Cint), session, correlationIds, Cint(numCorrelationIds), requestLabel, Cint(requestLabelLen))
 end
 
-function blpapi_Session_sendRequest(session, request, correlationId::Union{Signed,String}, identity, eventQueue, requestLabel, requestLabelLen)
-    if correlationId isa Signed
+function blpapi_Session_sendRequest(session, request, correlationId::Signed, identity, eventQueue, requestLabel, requestLabelLen)
         @check ccall((:blpapi_Session_sendRequest_intId, blpapi3_helper), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Clonglong, Ptr{Cvoid}, Ptr{Cvoid}, Cstring, Cint), session, request, correlationId, identity, eventQueue, requestLabel, Int32(requestLabelLen))
-    elseif correlationId isa String
+end
+
+function blpapi_Session_sendRequest(session, request, correlationId::String, identity, eventQueue, requestLabel, requestLabelLen)
         @check ccall((:blpapi_Session_sendRequest_strId, blpapi3_helper), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Cstring, Ptr{Cvoid}, Ptr{Cvoid}, Cstring, Cint), session, request, pointer(correlationId), identity, eventQueue, requestLabel, Int32(requestLabelLen))
-    end
 end
 
 function blpapi_Session_openService(session, serviceName)
